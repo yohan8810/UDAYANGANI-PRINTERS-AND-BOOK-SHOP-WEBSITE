@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Books - Udayangani Printers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg fixed w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-2xl font-bold text-blue-600">UDAYANGANI</a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-700 hover:text-blue-600 font-medium transition">Home</a>
+                    <a href="gallery.html" class="text-gray-700 hover:text-blue-600 font-medium transition">Gallery</a>
+                    <a href="books.html" class="text-blue-600 font-bold transition">E-Books</a>
+                    <a href="tools.html" class="text-gray-700 hover:text-blue-600 font-medium transition">PDF Tools</a>
+                    <a href="index.html#contact"
+                        class="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition">Contact
+                        Us</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button class="mobile-menu-button focus:outline-none">
+                        <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="hidden mobile-menu md:hidden bg-white border-t border-gray-100">
+            <a href="index.html" class="block py-2 px-4 text-sm hover:bg-blue-50">Home</a>
+            <a href="gallery.html" class="block py-2 px-4 text-sm hover:bg-blue-50">Gallery</a>
+            <a href="books.html" class="block py-2 px-4 text-sm hover:bg-blue-50">E-Books</a>
+            <a href="tools.html" class="block py-2 px-4 text-sm hover:bg-blue-50">PDF Tools</a>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white pt-32 pb-16 text-center">
+        <h1 class="text-4xl font-bold mb-4">Book Collection</h1>
+        <p class="text-blue-200 mb-8">Discover a world of knowledge and imagination.</p>
+
+        <!-- Search Bar -->
+        <div class="max-w-xl mx-auto px-4">
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Search for books..."
+                    class="w-full py-3 px-6 rounded-full text-gray-800 focus:outline-none focus:ring-4 focus:ring-blue-500 shadow-xl transition">
+                <button
+                    class="absolute right-2 top-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Books Grid -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow">
+        <!-- Categories -->
+        <div class="flex overflow-x-auto space-x-4 mb-8 pb-2 scrollbar-hide">
+            <button class="px-6 py-2 bg-blue-600 text-white rounded-full whitespace-nowrap shadow-md">All Books</button>
+            <button
+                class="px-6 py-2 bg-white text-gray-600 hover:bg-gray-100 rounded-full whitespace-nowrap border border-gray-200 transition">Education</button>
+            <button
+                class="px-6 py-2 bg-white text-gray-600 hover:bg-gray-100 rounded-full whitespace-nowrap border border-gray-200 transition">Novels</button>
+            <button
+                class="px-6 py-2 bg-white text-gray-600 hover:bg-gray-100 rounded-full whitespace-nowrap border border-gray-200 transition">Kids</button>
+            <button
+                class="px-6 py-2 bg-white text-gray-600 hover:bg-gray-100 rounded-full whitespace-nowrap border border-gray-200 transition">Stationery</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8" id="booksGrid">
+            <!-- Book 1 -->
+            <div
+                class="bg-white rounded-xl shadow-sm hover:shadow-xl transition duration-300 overflow-hidden group border border-gray-100">
+                <div class="h-64 overflow-hidden bg-gray-200 relative">
+                    <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                        alt="Book"
+                        class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500">
+                    <span
+                        class="absolute top-3 right-3 bg-yellow-400 text-xs font-bold px-2 py-1 rounded text-gray-800">NEW</span>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Classic Literature</h3>
+                    <p class="text-sm text-gray-500 mb-4">Hardcover Edition</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-600 font-bold text-lg">Rs. 1,200</span>
+                        <button
+                            class="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Book 2 -->
+            <div
+                class="bg-white rounded-xl shadow-sm hover:shadow-xl transition duration-300 overflow-hidden group border border-gray-100">
+                <div class="h-64 overflow-hidden bg-gray-200">
+                    <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                        alt="Book"
+                        class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500">
+                </div>
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Design Principles</h3>
+                    <p class="text-sm text-gray-500 mb-4">Educational</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-600 font-bold text-lg">Rs. 2,500</span>
+                        <button
+                            class="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Book 3 -->
+            <div
+                class="bg-white rounded-xl shadow-sm hover:shadow-xl transition duration-300 overflow-hidden group border border-gray-100">
+                <div class="h-64 overflow-hidden bg-gray-200">
+                    <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                        alt="Book"
+                        class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500">
+                </div>
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Modern Science</h3>
+                    <p class="text-sm text-gray-500 mb-4">Academic</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-600 font-bold text-lg">Rs. 1,800</span>
+                        <button
+                            class="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Book 4 -->
+            <div
+                class="bg-white rounded-xl shadow-sm hover:shadow-xl transition duration-300 overflow-hidden group border border-gray-100">
+                <div class="h-64 overflow-hidden bg-gray-200">
+                    <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                        alt="Book"
+                        class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500">
+                </div>
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Harry Potter</h3>
+                    <p class="text-sm text-gray-500 mb-4">Fiction</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-600 font-bold text-lg">Rs. 3,000</span>
+                        <button
+                            class="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="bg-gray-900 text-gray-400 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p>&copy; 2026 Udayangani Printers.</p>
+        </div>
+    </footer>
+
+    <script>
+        const btn = document.querySelector("button.mobile-menu-button");
+        const menu = document.querySelector(".mobile-menu");
+        btn.addEventListener("click", () => {
+            menu.classList.toggle("hidden");
+        });
+
+        // Simple Search Filter
+        const searchInput = document.getElementById('searchInput');
+        const books = document.querySelectorAll('#booksGrid > div');
+
+        searchInput.addEventListener('input', function (e) {
+            const term = e.target.value.toLowerCase();
+            books.forEach(book => {
+                const title = book.querySelector('h3').textContent.toLowerCase();
+                if (title.includes(term)) {
+                    book.style.display = 'block';
+                } else {
+                    book.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
