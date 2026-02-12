@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Udayangani Printers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-xl w-96">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Admin Login</h2>
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-700">Username</label>
+                <input type="text" id="username"
+                    class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Enter username">
+            </div>
+            <div>
+                <label class="block text-gray-700">Password</label>
+                <input type="password" id="password"
+                    class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Enter password">
+            </div>
+            <p id="errorMsg" class="text-red-500 text-sm hidden">Invalid credentials!</p>
+            <button type="submit"
+                class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">Login</button>
+        </form>
+        <div class="mt-4 text-center text-xs text-gray-400">
+            For Demo: admin / admin123
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+
+            if (u === 'admin' && p === 'admin123') {
+                localStorage.setItem('ud_admin_logged_in', 'true');
+                window.location.href = 'dashboard.html';
+            } else {
+                document.getElementById('errorMsg').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+
+</html>
