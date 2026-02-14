@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Word Converter - Udayangani Printers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXX"
+        crossorigin="anonymous"></script>
+    <style>
+        .word-page {
+            position: relative;
+            width: 794px;
+            /* A4 width at 96 DPI */
+            min-height: 1123px;
+            /* A4 height */
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            overflow: hidden;
+        }
+
+        .text-block {
+            position: absolute;
+            white-space: pre;
+            cursor: text;
+            line-height: 1.2;
+            transform-origin: left top;
+            /* Optional: Add background white to cover underlying strokes if we add background image */
+            /* background-color: rgba(255, 255, 255, 0.8); */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Header -->
+    <header class="bg-white shadow z-10 sticky top-0">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <div class="flex items-center">
+                <a href="tools.html" class="text-gray-500 hover:text-gray-900 mr-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <h1 class="text-2xl font-bold text-gray-900">PDF to Word Converter</h1>
+            </div>
+            <button onclick="downloadWordDoc()" id="downloadBtn" disabled
+                class="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                </svg>
+                Download Word (.doc)
+            </button>
+        </div>
+    </header>
+
+    <!-- Ad Unit -->
+    <div class="max-w-7xl mx-auto p-4 text-center">
+        <div
+            class="bg-gray-200 h-24 w-full flex items-center justify-center text-gray-500 rounded border border-dashed border-gray-400">
+            Google AdSense Space
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto p-4 flex flex-col items-center">
+
+        <!-- Upload Section -->
+        <div id="uploadSection" class="w-full max-w-2xl bg-white p-12 rounded-2xl shadow-lg text-center mb-8">
+            <div class="mb-4 text-blue-500 flex justify-center">
+                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-2 text-gray-800">Convert PDF to Editable Word</h2>
+            <p class="text-gray-500 mb-8">Upload your PDF to convert it to a Word document while keeping layout, images,
+                and text positions.</p>
+            <input type="file" id="fileInput" accept=".pdf" class="hidden" onchange="handleFileUpload(this)">
+            <button onclick="document.getElementById('fileInput').click()"
+                class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg transform hover:scale-105 duration-200">
+                Upload PDF File
+            </button>
+        </div>
+
+        <!-- Editor/Preview Section -->
+        <div id="editorSection" class="w-full hidden flex flex-col items-center">
+            <div class="bg-blue-50 text-blue-800 px-4 py-2 rounded mb-4 text-sm flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Preview Mode: You can edit text here before downloading. Layout structure is preserved.
+            </div>
+            <!-- Pages Container -->
+            <div id="pagesContainer" class="w-full flex flex-col items-center">
+                <!-- Pages get injected here -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Overlay -->
+    <div id="loadingOverlay"
+        class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-xl shadow-2xl flex flex-col items-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-4"></div>
+            <p id="loadingText" class="font-medium text-gray-700">Converting PDF...</p>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        async function handleFileUpload(input) {
+            if (input.files.length === 0) return;
+            const file = input.files[0];
+
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('loadingText').innerText = "Analyzing Layout & Fonts...";
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const container = document.getElementById('pagesContainer');
+                container.innerHTML = ''; // Clear previous
+
+                const scale = 1.5; // High enough quality for text placement matching A4 width approx
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    document.getElementById('loadingText').innerText = `Processing Page ${i} of ${pdf.numPages}...`;
+
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 1 }); // Get natural size
+
+                    // PDF.js uses 72 DPI by default usually (1 pt = 1/72 inch)
+                    // Word HTML A4 is approx 595pt x 842pt (or 794px x 1123px at 96dpi)
+                    // We need to map PDF coords to our display container
+
+                    // 1. Create Layout Wrapper
+                    const pageDiv = document.createElement('div');
+                    pageDiv.className = 'word-page';
+
+                    // We set dimensions based on PDF viewport but scaled to likely screen/print pixels
+                    // Let's assume 1 PDF pt = 1.33 px (96/72 conversion) approx for display
+                    const conversionScale = 96 / 72; // 1.333
+                    const displayWidth = viewport.width * conversionScale;
+                    const displayHeight = viewport.height * conversionScale;
+
+                    pageDiv.style.width = `${displayWidth}px`;
+                    pageDiv.style.height = `${displayHeight}px`;
+
+                    // 2. Render Background Image (Preserves Signatures, Lines, Images)
+                    // We use a separate larger scale for canvas to ensure quality
+                    const renderScale = 2;
+                    const renderViewport = page.getViewport({ scale: renderScale });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = renderViewport.width;
+                    canvas.height = renderViewport.height;
+                    const ctx = canvas.getContext('2d');
+
+                    await page.render({ canvasContext: ctx, viewport: renderViewport }).promise;
+                    const bgData = canvas.toDataURL('image/jpeg', 0.8);
+
+                    const bgImg = document.createElement('img');
+                    bgImg.src = bgData;
+                    bgImg.style.position = 'absolute';
+                    bgImg.style.left = '0';
+                    bgImg.style.top = '0';
+                    bgImg.style.width = '100%';
+                    bgImg.style.height = '100%';
+                    bgImg.style.zIndex = '0';
+                    // We make image slightly transparent so editable text on top is clear? 
+                    // No, keeping it full opacity is better for signatures.
+                    // BUT, if we put text on top, we have double text.
+                    // We will put text with BACKGROUND WHITE to cover the image text.
+
+                    pageDiv.appendChild(bgImg);
+
+                    // 3. Extract and Place Text
+                    const textContent = await page.getTextContent();
+
+                    textContent.items.forEach(item => {
+                        const tx = pdfjsLib.Util.transform(
+                            pdfjsLib.Util.transform(viewport.transform, item.transform),
+                            [1, 0, 0, -1, 0, 0]
+                        );
+
+                        // item.transform is [scaleX, skewY, skewX, scaleY, x, y]
+                        // We need correct CSS positioning.
+                        // PDF coords: (0,0) is usually bottom-left.
+                        // PDF.js viewport.convertToViewportPoint handles this mostly?
+                        // Let's use simple math based on unscaled viewport
+
+                        const fontHeight = Math.sqrt((item.transform[0] * item.transform[0]) + (item.transform[1] * item.transform[1])); // approx
+                        // Scaled to our HTML display
+                        const finalFontSize = fontHeight * conversionScale;
+
+                        // PDF y is from bottom, HTML from top.
+                        // item.transform[5] is y coord (bottom up).
+                        // viewport.height is total height.
+                        // so Top = viewport.height - y - height
+
+                        const pdfX = item.transform[4];
+                        const pdfY = item.transform[5];
+
+                        // Convert to display unit
+                        const x = pdfX * conversionScale;
+                        const y = (viewport.height - pdfY) * conversionScale - (finalFontSize * 0.8); // Adjust for baseline
+
+                        const textDiv = document.createElement('div');
+                        textDiv.className = 'text-block';
+                        textDiv.contentEditable = true;
+                        textDiv.innerText = item.str;
+                        textDiv.style.left = `${x}px`;
+                        textDiv.style.top = `${y}px`;
+                        textDiv.style.fontSize = `${finalFontSize}px`;
+                        textDiv.style.fontFamily = "sans-serif"; // Allow browser fallback
+
+                        // Vital: Add White Background to text block to hide the 'baked' text in background image
+                        // Use padded background
+                        textDiv.style.backgroundColor = "white";
+                        textDiv.style.zIndex = "1";
+
+                        // Check for empty text
+                        if (item.str.trim().length > 0) {
+                            pageDiv.appendChild(textDiv);
+                        }
+                    });
+
+                    container.appendChild(pageDiv);
+                }
+
+                document.getElementById('editorSection').classList.remove('hidden');
+                document.getElementById('downloadBtn').disabled = false;
+
+            } catch (error) {
+                console.error(error);
+                alert("Error converting PDF: " + error.message);
+                document.getElementById('uploadSection').classList.remove('hidden');
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        function downloadWordDoc() {
+            const content = document.getElementById('pagesContainer').innerHTML;
+
+            // Construct a complete HTML file that Word interprets
+            // We embed the CSS directly
+            const header = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+                      xmlns:w='urn:schemas-microsoft-com:office:word' 
+                      xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>Converted Document</title>
+                    <style>
+                        body { background: #gray; }
+                        .word-page {
+                            position: relative;
+                            width: 794px;
+                            height: 1123px;
+                            background: white;
+                            margin: 20px auto;
+                            page-break-after: always;
+                        }
+                        .text-block {
+                            position: absolute;
+                            white-space: pre;
+                            background: white;
+                        }
+                        img {
+                            width: 100%;
+                            height: 100%;
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            z-index: -1;
+                        }
+                    </style>
+                </head>
+                <body>
+            `;
+
+            const footer = "</body></html>";
+            const sourceHTML = header + content + footer;
+
+            // Use Blob for better download handling
+            const blob = new Blob(['\ufeff', sourceHTML], { // \ufeff BOM for UTF-8
+                type: 'application/msword'
+            });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Udayangani_Printers_Doc.doc'; // .doc extension triggers HTML open in Word often
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+
+</html>

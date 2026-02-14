@@ -168,16 +168,34 @@
 
     <!-- Book Modal -->
     <div id="bookModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg w-96">
+        <div class="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-4">Add Book</h3>
+            <div class="bg-yellow-50 p-2 mb-4 rounded border border-yellow-200 text-xs text-yellow-800">
+                <strong>IMPORTANT:</strong> Manually copy your files (cover image & book file) into the
+                <code>storage</code> folder first!
+            </div>
+
+            <label class="block text-gray-700 text-sm font-bold mb-1">Book Title</label>
             <input type="text" id="bookTitle" placeholder="Title" class="w-full border p-2 mb-2 rounded">
+
+            <label class="block text-gray-700 text-sm font-bold mb-1">Category</label>
             <input type="text" id="bookCat" placeholder="Category" class="w-full border p-2 mb-2 rounded">
+
+            <label class="block text-gray-700 text-sm font-bold mb-1">Price</label>
             <input type="text" id="bookPrice" placeholder="Price (e.g. 1,200)" class="w-full border p-2 mb-2 rounded">
-            <input type="text" id="bookImg" placeholder="Cover Image URL" class="w-full border p-2 mb-4 rounded">
+
+            <label class="block text-gray-700 text-sm font-bold mb-1">Cover Image (JPG/PNG)</label>
+            <input type="file" id="bookCoverFile" accept="image/*" class="w-full border p-2 mb-2 rounded text-sm">
+
+            <label class="block text-gray-700 text-sm font-bold mb-1">Book File (PDF/Word)</label>
+            <input type="file" id="bookFileFile" accept=".pdf,.doc,.docx,.xls,.xlsx"
+                class="w-full border p-2 mb-4 rounded text-sm">
+
             <label class="flex items-center space-x-2 mb-4">
                 <input type="checkbox" id="bookNew">
                 <span>Mark as New</span>
             </label>
+
             <div class="flex justify-end space-x-2">
                 <button onclick="closeModal('bookModal')" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
                 <button onclick="addBook()" class="bg-purple-600 text-white px-4 py-2 rounded">Save</button>
@@ -253,9 +271,11 @@
             const bookTable = document.getElementById('booksTable');
             bookTable.innerHTML = '';
             books.forEach((book, index) => {
+                let imgScr = book.imageUrl.startsWith('http') ? book.imageUrl : book.imageUrl; // Already includes 'storage/' if local
+
                 bookTable.innerHTML += `
                     <tr class="border-b hover:bg-gray-50">
-                         <td class="py-3 px-6"><img src="${book.imageUrl}" class="w-10 h-10 object-cover rounded"></td>
+                         <td class="py-3 px-6"><img src="${imgScr}" class="w-10 h-10 object-cover rounded"></td>
                         <td class="py-3 px-6 font-medium">${book.title}</td>
                         <td class="py-3 px-6 font-bold text-blue-600">Rs. ${book.price}</td>
                         <td class="py-3 px-6">${book.category}</td>
@@ -302,13 +322,31 @@
             const title = document.getElementById('bookTitle').value;
             const cat = document.getElementById('bookCat').value;
             const price = document.getElementById('bookPrice').value;
-            const img = document.getElementById('bookImg').value;
             const isNew = document.getElementById('bookNew').checked;
-            if (!title || !price) return alert("Fill required fields");
+
+            const coverInput = document.getElementById('bookCoverFile');
+            const fileInput = document.getElementById('bookFileFile');
+
+            if (!title || !price || !coverInput.files[0]) return alert("Please fill Title, Price and select a Cover Image!");
+
+            const coverName = coverInput.files[0].name;
+            const fileName = fileInput.files[0] ? fileInput.files[0].name : null;
+
+            // Construct Paths
+            const imgPath = `storage/${coverName}`;
+            const filePath = fileName ? `storage/${fileName}` : null;
 
             const items = JSON.parse(localStorage.getItem('ud_books')) || [];
-            items.push({ title, category: cat, price, imageUrl: img, isNew });
+            items.push({
+                title,
+                category: cat,
+                price,
+                imageUrl: imgPath,
+                fileUrl: filePath,
+                isNew
+            });
             localStorage.setItem('ud_books', JSON.stringify(items));
+            alert("Book Saved! Remember to verify files are in the 'storage' folder.");
             closeModal('bookModal');
             renderAll();
         }

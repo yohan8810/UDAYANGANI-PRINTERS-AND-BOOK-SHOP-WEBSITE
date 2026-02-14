@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge PDF - Udayangani Printers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+    <!-- AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXX"
+        crossorigin="anonymous"></script>
+
+    <style>
+        .file-card {
+            transition: all 0.2s;
+        }
+
+        .file-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .thumbnail-canvas {
+            width: 100%;
+            height: 140px;
+            object-fit: contain;
+            background: #f3f4f6;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Header -->
+    <header class="bg-white shadow z-10 sticky top-0">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <div class="flex items-center">
+                <a href="tools.html" class="text-gray-500 hover:text-gray-900 mr-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <h1 class="text-2xl font-bold text-gray-900">Merge PDF Files</h1>
+            </div>
+            <button onclick="mergePDFs()" id="downloadBtn" disabled
+                class="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                Download Merged PDF
+            </button>
+        </div>
+    </header>
+
+    <!-- Ad Unit -->
+    <div class="max-w-7xl mx-auto p-4 text-center">
+        <div
+            class="bg-gray-200 h-24 w-full flex items-center justify-center text-gray-500 rounded border border-dashed border-gray-400">
+            Google AdSense Space
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto p-4 flex flex-col items-center">
+
+        <!-- Initial Upload State -->
+        <div id="initialUpload" class="w-full max-w-3xl bg-white p-16 rounded-2xl shadow-lg text-center my-8">
+            <div class="mb-6 flex justify-center text-blue-500">
+                <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2">
+                    </path>
+                </svg>
+            </div>
+
+            <h2 class="text-3xl font-bold mb-4 text-gray-800">Combine PDF Files</h2>
+            <p class="text-gray-500 mb-8 text-lg">Drag and drop specific PDF files or click below to start.</p>
+
+            <button onclick="document.getElementById('fileInput').click()"
+                class="bg-blue-600 text-white px-10 py-5 rounded-xl font-bold text-xl hover:bg-blue-700 transition shadow-lg flex items-center justify-center mx-auto transform hover:scale-105 duration-200">
+                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                    </path>
+                </svg>
+                Select PDF Files
+            </button>
+        </div>
+
+        <!-- Hidden Input -->
+        <input type="file" id="fileInput" accept=".pdf" multiple class="hidden" onchange="handleFiles(this.files)">
+
+        <!-- Grid View (Centered) -->
+        <div id="gridContainer" class="w-full hidden">
+            <div class="flex justify-between items-center mb-4 max-w-6xl mx-auto px-4">
+                <h3 class="text-xl font-semibold text-gray-700">Organize Pages</h3>
+                <button onclick="clearAll()" class="text-red-500 hover:text-red-700 text-sm font-medium">Clear
+                    All</button>
+            </div>
+
+            <!-- The Grid -->
+            <div id="fileGrid"
+                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-6xl mx-auto justify-center">
+                <!-- Items will be injected here -->
+
+                <!-- Add Button Card (Always at end) -->
+                <div onclick="document.getElementById('fileInput').click()"
+                    class="file-card bg-white border-2 border-dashed border-blue-300 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer min-h-[240px] hover:border-blue-500 hover:bg-blue-50 text-blue-500 group order-last"
+                    id="addBtnCard">
+                    <div
+                        class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                    </div>
+                    <span class="font-bold">Add More</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded shadow-xl flex flex-col items-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-3"></div>
+            <p id="loadingText">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Template for File Card -->
+    <template id="cardTemplate">
+        <div class="file-card bg-white rounded-xl shadow p-3 relative flex flex-col group h-[240px]">
+            <button
+                class="remove-btn absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 z-10"
+                title="Remove">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+
+            <div
+                class="thumbnail-wrapper flex-grow bg-gray-100 rounded mb-3 overflow-hidden flex items-center justify-center relative">
+                <!-- Canvas will be appended here -->
+                <div
+                    class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black bg-opacity-20">
+                    <!-- Move Buttons -->
+                    <button class="move-left bg-white p-1 rounded-full shadow mr-2 hover:bg-gray-100 text-gray-700"
+                        title="Move Left">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <button class="move-right bg-white p-1 rounded-full shadow hover:bg-gray-100 text-gray-700"
+                        title="Move Right">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center px-1">
+                <p class="filename text-sm font-semibold text-gray-700 truncate w-full" title="filename.pdf">
+                    filename.pdf</p>
+                <p class="filesize text-xs text-gray-400">1.2 MB</p>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let filesData = []; // Store file objects and meta
+
+        function handleFiles(files) {
+            if (!files.length) return;
+
+            const newFiles = Array.from(files).filter(f => f.type === 'application/pdf');
+            if (newFiles.length === 0) return;
+
+            // Process new files
+            const startIdx = filesData.length;
+            newFiles.forEach(file => {
+                filesData.push({
+                    file: file,
+                    id: Math.random().toString(36).substr(2, 9),
+                    thumbnail: null // To be generated
+                });
+            });
+
+            updateView();
+            generateThumbnails(startIdx);
+        }
+
+        function updateView() {
+            const initialUpload = document.getElementById('initialUpload');
+            const gridContainer = document.getElementById('gridContainer');
+            const grid = document.getElementById('fileGrid');
+            const addBtnCard = document.getElementById('addBtnCard');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const template = document.getElementById('cardTemplate');
+
+            if (filesData.length > 0) {
+                initialUpload.classList.add('hidden');
+                gridContainer.classList.remove('hidden');
+                downloadBtn.disabled = false;
+            } else {
+                initialUpload.classList.remove('hidden');
+                gridContainer.classList.add('hidden');
+                downloadBtn.disabled = true;
+                return;
+            }
+
+            // Clear grid except add button
+            const cards = grid.querySelectorAll('.file-card:not(#addBtnCard)');
+            cards.forEach(c => c.remove());
+
+            // Re-render
+            filesData.forEach((item, index) => {
+                const clone = template.content.cloneNode(true);
+                const card = clone.querySelector('.file-card');
+
+                card.querySelector('.filename').textContent = item.file.name;
+                card.querySelector('.filesize').textContent = (item.file.size / 1024 / 1024).toFixed(2) + ' MB';
+
+                // Remove handler
+                card.querySelector('.remove-btn').onclick = () => removeFile(index);
+
+                // Move handlers
+                const leftBtn = card.querySelector('.move-left');
+                const rightBtn = card.querySelector('.move-right');
+
+                if (index === 0) leftBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                else leftBtn.onclick = () => moveFile(index, -1);
+
+                if (index === filesData.length - 1) rightBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                else rightBtn.onclick = () => moveFile(index, 1);
+
+                // Thumbnail
+                const thumbWrapper = card.querySelector('.thumbnail-wrapper');
+                if (item.thumbnail) {
+                    thumbWrapper.prepend(item.thumbnail);
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = "w-full h-full flex items-center justify-center text-gray-400";
+                    placeholder.innerHTML = '<div class="animate-pulse w-12 h-16 bg-gray-200 rounded"></div>';
+                    placeholder.id = `thumb-${item.id}`;
+                    thumbWrapper.prepend(placeholder);
+                }
+
+                grid.insertBefore(card, addBtnCard);
+            });
+        }
+
+        async function generateThumbnails(startIndex) {
+            for (let i = startIndex; i < filesData.length; i++) {
+                const item = filesData[i];
+                if (item.thumbnail) continue;
+
+                try {
+                    const arrayBuffer = await item.file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    const page = await pdf.getPage(1);
+
+                    const scale = 0.5;
+                    const viewport = page.getViewport({ scale: scale });
+
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = 140; // Fixed height mostly
+                    canvas.width = (140 / viewport.height) * viewport.width;
+                    // Actually let's just fit to height
+                    const scaleToFit = 140 / viewport.height;
+                    const finalViewport = page.getViewport({ scale: scale * (1 / scale) * scaleToFit }); // Simplify: just viewport height = 140
+
+                    // Correct approach:
+                    const thumbViewport = page.getViewport({ scale: 1 });
+                    const thumbScale = 140 / thumbViewport.height;
+                    const scaledViewport = page.getViewport({ scale: thumbScale });
+
+                    canvas.height = scaledViewport.height;
+                    canvas.width = scaledViewport.width;
+                    canvas.className = 'thumbnail-canvas';
+
+                    await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
+
+                    item.thumbnail = canvas;
+
+                    // Update DOM if exists
+                    const placeholder = document.getElementById(`thumb-${item.id}`);
+                    if (placeholder) {
+                        placeholder.replaceWith(canvas);
+                    }
+
+                } catch (e) {
+                    console.error("Thumbnail error", e);
+                }
+            }
+        }
+
+        function removeFile(index) {
+            filesData.splice(index, 1);
+            updateView();
+        }
+
+        function moveFile(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= filesData.length) return;
+
+            const temp = filesData[index];
+            filesData[index] = filesData[newIndex];
+            filesData[newIndex] = temp;
+
+            updateView();
+        }
+
+        function clearAll() {
+            filesData = [];
+            updateView();
+        }
+
+        async function mergePDFs() {
+            if (filesData.length === 0) return;
+
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('hidden');
+            document.getElementById('loadingText').innerText = "Merging PDFs...";
+
+            try {
+                const { PDFDocument } = PDFLib;
+                const mergedPdf = await PDFDocument.create();
+
+                for (const item of filesData) {
+                    const arrayBuffer = await item.file.arrayBuffer();
+                    const pdf = await PDFDocument.load(arrayBuffer);
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    copiedPages.forEach((page) => mergedPdf.addPage(page));
+                }
+
+                const pdfBytes = await mergedPdf.save();
+                download(pdfBytes, "merged_document.pdf", "application/pdf");
+
+            } catch (err) {
+                console.error(err);
+                alert("Error merging: " + err.message);
+            } finally {
+                overlay.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+
+</html>

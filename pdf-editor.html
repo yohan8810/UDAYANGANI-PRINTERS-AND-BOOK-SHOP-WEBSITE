@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced PDF Editor - Udayangani Printers</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Noto+Sans+Sinhala:wght@400;700&family=Noto+Serif+Sinhala:wght@400;700&family=Noto+Sans+Tamil:wght@400;700&family=Abhaya+Libre:wght@400;700&display=swap"
+        rel="stylesheet">
+    <!-- PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit@0.0.4/dist/fontkit.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        /* Fonts */
+        .font-sinhala-sans {
+            font-family: 'Noto Sans Sinhala', sans-serif;
+        }
+
+        .font-sinhala-serif {
+            font-family: 'Noto Serif Sinhala', serif;
+        }
+
+        /* Iskoola Pota style */
+        .font-tamil {
+            font-family: 'Noto Sans Tamil', sans-serif;
+        }
+
+        .font-english {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .pdf-page-container {
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 2rem;
+            background-color: white;
+        }
+
+        .annotation-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 10;
+        }
+
+        .annotation {
+            position: absolute;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .text-annotation-wrapper {
+            position: absolute;
+            min-width: 50px;
+            padding: 4px;
+            border: 1px dashed transparent;
+        }
+
+        .text-annotation-content {
+            outline: none;
+            white-space: pre-wrap;
+            min-height: 1em;
+            cursor: text;
+        }
+
+        .text-annotation-wrapper:hover {
+            border-color: #cbd5e1;
+            /* Light gray on hover */
+        }
+
+        .text-annotation-wrapper.selected {
+            border: 1px dashed #3b82f6;
+            /* Blue when selected */
+            background-color: rgba(59, 130, 246, 0.05);
+            z-index: 50;
+        }
+
+        /* Move Handle */
+        .move-handle {
+            position: absolute;
+            top: -24px;
+            left: 0;
+            background-color: #3b82f6;
+            /* Blue */
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px 4px 0 0;
+            font-size: 12px;
+            cursor: move;
+            display: none;
+            z-index: 60;
+            white-space: nowrap;
+        }
+
+        .text-annotation-wrapper.selected .move-handle {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Header / Toolbar -->
+    <header class="bg-white shadow-md z-20">
+        <div class="px-4 py-3 flex items-center justify-between border-b">
+            <div class="flex items-center space-x-4">
+                <a href="tools.html" class="text-gray-500 hover:text-gray-900">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <h1 class="text-xl font-bold text-gray-800">PDF Editor</h1>
+
+                <!-- Undo / Redo -->
+                <div class="flex space-x-1 border-l pl-4 ml-4">
+                    <button onclick="undo()" class="p-2 text-gray-600 hover:bg-gray-100 rounded" title="Undo (Ctrl+Z)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                        </svg>
+                    </button>
+                    <button onclick="redo()" class="p-2 text-gray-600 hover:bg-gray-100 rounded" title="Redo (Ctrl+Y)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <input type="file" id="pdfUpload" accept=".pdf" class="hidden">
+                <button onclick="document.getElementById('pdfUpload').click()"
+                    class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    Upload PDF
+                </button>
+                <button onclick="savePDF()" id="saveBtn" disabled
+                    class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 flex items-center disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-md">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                        </path>
+                    </svg>
+                    SAVE PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Tool Options -->
+        <div class="bg-gray-50 px-4 py-2 flex items-center space-x-4 overflow-x-auto" id="toolbar">
+            <div class="flex space-x-1 border-r pr-4">
+                <button class="tool-btn p-2 rounded hover:bg-gray-200 active-tool" data-tool="cursor"
+                    title="Select / Move">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122">
+                        </path>
+                    </svg>
+                </button>
+                <button class="tool-btn p-2 rounded hover:bg-gray-200" data-tool="text" title="Add Text">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                </button>
+                <button class="tool-btn p-2 rounded hover:bg-gray-200" data-tool="pencil" title="Freehand Draw">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
+                        </path>
+                    </svg>
+                </button>
+                <button class="tool-btn p-2 rounded hover:bg-gray-200" data-tool="rect" title="Rectangle Box">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z"></path>
+                    </svg>
+                </button>
+                <button class="tool-btn p-2 rounded hover:bg-gray-200" data-tool="eraser" title="Whiteout / Eraser">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Drawing Options (Color / Size) -->
+            <div id="drawingOptions" class="flex items-center space-x-2 hidden">
+                <input type="color" id="drawColor" value="#000000" class="w-8 h-8 rounded border p-1 cursor-pointer"
+                    onchange="updateSelectedStyle('color', this.value)">
+                <select id="drawSize" class="border rounded px-2 py-1 text-sm bg-white"
+                    onchange="updateSelectedStyle('size', this.value)">
+                    <option value="1">1px</option>
+                    <option value="2" selected>2px</option>
+                    <option value="4">4px</option>
+                    <option value="6">6px</option>
+                    <option value="8">8px</option>
+                </select>
+            </div>
+
+            <!-- Text Options -->
+            <div id="textOptions" class="hidden flex items-center space-x-2">
+                <!-- Font Family -->
+                <select id="fontFamily" class="border rounded px-2 py-1 text-sm bg-white w-40"
+                    onchange="updateSelectedStyle('font', this.value)">
+                    <option value="font-sinhala-serif">Sinhala (Iskoola Pota Style)</option>
+                    <option value="font-sinhala-sans">Sinhala (Sans)</option>
+                    <option value="font-tamil">Tamil</option>
+                    <option value="font-english">English</option>
+                </select>
+
+                <!-- Bold -->
+                <button id="boldBtn" class="p-1 border rounded hover:bg-gray-200" onclick="toggleBold()">
+                    <span class="font-bold text-lg px-1">B</span>
+                </button>
+
+                <!-- Font Color -->
+                <input type="color" id="textColor" value="#000000" class="w-8 h-8 rounded border p-1 cursor-pointer"
+                    onchange="updateSelectedStyle('color', this.value)">
+
+                <!-- Font Size -->
+                <select id="textSize" class="border rounded px-2 py-1 text-sm bg-white"
+                    onchange="updateSelectedStyle('size', this.value)">
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16" selected>16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="24">24</option>
+                    <option value="30">30</option>
+                    <option value="36">36</option>
+                    <option value="48">48</option>
+                    <option value="60">60</option>
+                    <option value="72">72</option>
+                </select>
+            </div>
+
+            <!-- Delete Option -->
+            <div id="selectedOptions" class="hidden flex items-center space-x-2 border-l pl-4">
+                <button onclick="deleteSelected()"
+                    class="text-red-600 hover:text-red-800 flex items-center text-sm font-medium"
+                    title="Delete Selected (Del Key)">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                        </path>
+                    </svg>
+                    Delete
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Editor Area -->
+    <main class="flex-1 overflow-auto bg-gray-200 p-8 flex justify-center relative" id="mainContainer">
+        <div id="pdfContainer" class="max-w-4xl w-full">
+            <div class="bg-white p-12 rounded-lg text-center shadow-sm">
+                <h3 class="text-lg font-medium text-gray-700">No PDF Loaded</h3>
+                <p class="text-gray-500 mb-4">Upload a PDF to start editing</p>
+                <div class="mt-4 text-sm text-gray-400">
+                    Supports: Sinhala (Iskoola Pota), Tamil, English, Bold Text, and Moving Boxes
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p id="loadingText" class="text-gray-800 font-medium">Processing...</p>
+        </div>
+    </div>
+
+    <script>
+        // --- State ---
+        let pdfDocBytes = null;
+        let pdfScale = 1.5;
+        let activeTool = 'cursor';
+        let selectedAnnotation = null;
+
+        // Undo/Redo Storage
+        const undoStack = [];
+        const redoStack = [];
+
+        // --- DOM Elements ---
+        const container = document.getElementById('pdfContainer');
+        const fileInput = document.getElementById('pdfUpload');
+        const textOptions = document.getElementById('textOptions');
+        const drawingOptions = document.getElementById('drawingOptions');
+        const selectedOptions = document.getElementById('selectedOptions');
+        const toolBtns = document.querySelectorAll('.tool-btn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+        const saveBtn = document.getElementById('saveBtn');
+        const boldBtn = document.getElementById('boldBtn');
+
+        // --- Initialization ---
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Check URL Params
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tool = urlParams.get('tool');
+            if (tool && ['text', 'eraser', 'pencil', 'rect'].includes(tool)) {
+                activateTool(tool);
+            }
+        });
+
+        function activateTool(toolName) {
+            toolBtns.forEach(b => {
+                if (b.dataset.tool === toolName) {
+                    b.click();
+                }
+            });
+        }
+
+        // --- Tool Switching ---
+        toolBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                toolBtns.forEach(b => b.classList.remove('active-tool', 'bg-gray-200'));
+                btn.classList.add('active-tool', 'bg-gray-200');
+
+                activeTool = btn.dataset.tool;
+
+                // Toggle options
+                textOptions.classList.add('hidden');
+                drawingOptions.classList.add('hidden');
+
+                if (activeTool === 'text') textOptions.classList.remove('hidden');
+                if (activeTool === 'pencil' || activeTool === 'rect' || activeTool === 'eraser') drawingOptions.classList.remove('hidden');
+
+                if (selectedAnnotation) deselectAnnotation();
+            });
+        });
+
+        // --- File Upload ---
+        fileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length === 0) return;
+            const file = e.target.files[0];
+            showLoading(true, "Loading PDF...");
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                pdfDocBytes = arrayBuffer;
+                await renderPDF(arrayBuffer);
+                saveBtn.disabled = false;
+                undoStack.length = 0;
+                redoStack.length = 0;
+            } catch (err) {
+                console.error(err);
+                alert("Error loading PDF: " + err.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        function showLoading(show, text = "") {
+            loadingOverlay.classList.toggle('hidden', !show);
+            if (text) loadingText.textContent = text;
+        }
+
+        // --- Rendering ---
+        async function renderPDF(buffer) {
+            container.innerHTML = '';
+
+            const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: pdfScale });
+
+                const pageWrapper = document.createElement('div');
+                pageWrapper.className = 'pdf-page-container mx-auto';
+                pageWrapper.dataset.pageNumber = i;
+                pageWrapper.style.width = `${viewport.width}px`;
+                pageWrapper.style.height = `${viewport.height}px`;
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                canvas.className = 'pdf-render';
+
+                const annotationLayer = document.createElement('div');
+                annotationLayer.className = 'annotation-layer';
+
+                pageWrapper.appendChild(canvas);
+                pageWrapper.appendChild(annotationLayer);
+                container.appendChild(pageWrapper);
+
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
+                setupInteraction(annotationLayer);
+            }
+        }
+
+        // --- Interaction & Tools ---
+        function setupInteraction(layer) {
+            let isDrawing = false;
+            let startX, startY;
+            let currentEl = null;
+            let points = [];
+
+            layer.addEventListener('mousedown', (e) => {
+                if (activeTool === 'cursor') return;
+
+                // If clicking an annotation
+                if (e.target.classList.contains('annotation') || e.target.closest('.annotation') || e.target.closest('.text-annotation-wrapper')) {
+                    return;
+                }
+
+                // Drawing Tools
+                if (['eraser', 'rect', 'pencil'].includes(activeTool)) {
+                    isDrawing = true;
+                    const rect = layer.getBoundingClientRect();
+                    startX = e.clientX - rect.left;
+                    startY = e.clientY - rect.top;
+
+                    if (activeTool === 'pencil') {
+                        currentEl = createSvgElement(layer);
+                        const path = createPathElement();
+                        const color = document.getElementById('drawColor').value;
+                        const size = document.getElementById('drawSize').value;
+
+                        path.setAttribute('d', `M ${startX} ${startY}`);
+                        path.setAttribute('stroke', color);
+                        path.setAttribute('stroke-width', size);
+                        path.setAttribute('fill', 'none');
+                        path.setAttribute('stroke-linecap', 'round');
+                        path.setAttribute('style', 'pointer-events: visibleStroke; cursor: pointer;');
+
+                        currentEl.appendChild(path);
+                        currentEl.dataset.type = 'pencil';
+                        currentEl.dataset.points = JSON.stringify([[startX, startY]]);
+                        currentEl.dataset.color = color;
+                        currentEl.dataset.size = size;
+
+                        layer.appendChild(currentEl);
+                        points = [[startX, startY]];
+
+                    } else {
+                        currentEl = document.createElement('div');
+                        currentEl.className = 'annotation absolute';
+                        currentEl.dataset.type = activeTool;
+
+                        if (activeTool === 'eraser') {
+                            currentEl.className += ' bg-white border border-gray-300';
+                        } else if (activeTool === 'rect') {
+                            const color = document.getElementById('drawColor').value;
+                            const size = document.getElementById('drawSize').value;
+                            currentEl.className += ' border-solid';
+                            currentEl.style.borderColor = color;
+                            currentEl.style.borderWidth = size + 'px';
+                        }
+
+                        currentEl.style.left = startX + 'px';
+                        currentEl.style.top = startY + 'px';
+                        currentEl.style.width = '0px';
+                        currentEl.style.height = '0px';
+                        layer.appendChild(currentEl);
+                    }
+                }
+
+                // Text Tool Implementation (Click to Place)
+                else if (activeTool === 'text') {
+                    const rect = layer.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const el = createTextElement(x, y);
+                    layer.appendChild(el);
+
+                    recordAction('add', el, layer);
+
+                    selectAnnotation(el);
+                    // Focus content area
+                    el.querySelector('.text-annotation-content').focus();
+                }
+            });
+
+            layer.addEventListener('mousemove', (e) => {
+                if (!isDrawing || !currentEl) return;
+                const rect = layer.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+
+                if (activeTool === 'pencil') {
+                    points.push([currentX, currentY]);
+                    const path = currentEl.firstChild;
+                    const d = path.getAttribute('d') + ` L ${currentX} ${currentY}`;
+                    path.setAttribute('d', d);
+                    currentEl.dataset.points = JSON.stringify(points);
+                } else {
+                    const width = currentX - startX;
+                    const height = currentY - startY;
+                    currentEl.style.width = Math.abs(width) + 'px';
+                    currentEl.style.height = Math.abs(height) + 'px';
+                    currentEl.style.left = (width < 0 ? currentX : startX) + 'px';
+                    currentEl.style.top = (height < 0 ? currentY : startY) + 'px';
+                }
+            });
+
+            layer.addEventListener('mouseup', () => {
+                if (isDrawing && currentEl) {
+                    isDrawing = false;
+                    recordAction('add', currentEl, layer);
+
+                    setupAnnotationElement(currentEl);
+                    selectAnnotation(currentEl);
+
+                    currentEl = null;
+                    if (activeTool !== 'pencil') activateTool('cursor');
+                }
+            });
+        }
+
+        // --- Element Creation Helpers ---
+        function createSvgElement(layer) {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute('class', 'annotation absolute top-0 left-0 w-full h-full pointer-events-none');
+            return svg;
+        }
+
+        function createPathElement() {
+            return document.createElementNS("http://www.w3.org/2000/svg", "path");
+        }
+
+        function createTextElement(x, y) {
+            // Wrapper for easy moving
+            const wrapper = document.createElement('div');
+            wrapper.className = 'text-annotation-wrapper';
+            wrapper.dataset.type = 'text';
+            wrapper.style.left = x + 'px';
+            wrapper.style.top = y + 'px';
+
+            // Drag Handle
+            const handle = document.createElement('div');
+            handle.className = 'move-handle shadow-sm';
+            handle.innerHTML = '<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Move';
+
+            // Content
+            const content = document.createElement('div');
+            content.className = 'text-annotation-content font-sinhala-serif'; // Default to Iskoola Pota style
+            content.contentEditable = true;
+            content.spellcheck = false;
+
+            // Get styles
+            const color = document.getElementById('textColor').value;
+            const size = document.getElementById('textSize').value;
+            const font = document.getElementById('fontFamily').value;
+
+            content.style.color = color;
+            content.style.fontSize = size + 'px';
+            content.classList.remove('font-sinhala-serif', 'font-sinhala-sans', 'font-tamil', 'font-english');
+            content.classList.add(font);
+
+            wrapper.appendChild(handle);
+            wrapper.appendChild(content);
+
+            setupTextInteraction(wrapper);
+            return wrapper;
+        }
+
+        function setupTextInteraction(wrapper) {
+            const handle = wrapper.querySelector('.move-handle');
+            const content = wrapper.querySelector('.text-annotation-content');
+
+            // Select on click
+            wrapper.addEventListener('mousedown', (e) => {
+                if (activeTool !== 'cursor') return;
+                e.stopPropagation();
+                selectAnnotation(wrapper);
+            });
+
+            // Drag using handle
+            handle.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const initialLeft = wrapper.offsetLeft;
+                const initialTop = wrapper.offsetTop;
+                let hasMoved = false;
+
+                function onMouseMove(moveEvent) {
+                    const dx = moveEvent.clientX - startX;
+                    const dy = moveEvent.clientY - startY;
+                    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) hasMoved = true;
+                    wrapper.style.left = (initialLeft + dx) + 'px';
+                    wrapper.style.top = (initialTop + dy) + 'px';
+                }
+
+                function onMouseUp() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    if (hasMoved) {
+                        recordAction('move', wrapper, {
+                            from: { left: initialLeft, top: initialTop },
+                            to: { left: wrapper.offsetLeft, top: wrapper.offsetTop }
+                        });
+                    }
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        }
+
+        function setupAnnotationElement(el) {
+            // General Drag logic for shapes (NOT text items, as they use wrapper handle)
+            if (el.dataset.type === 'text') return; // Handled specially
+
+            el.addEventListener('mousedown', (e) => {
+                if (activeTool !== 'cursor') return;
+                e.stopPropagation();
+
+                selectAnnotation(el);
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const initialLeft = el.offsetLeft;
+                const initialTop = el.offsetTop;
+
+                if (el.tagName.toLowerCase() === 'svg') return; // Skip pencil drag for now
+
+                let hasMoved = false;
+
+                function onMouseMove(moveEvent) {
+                    const dx = moveEvent.clientX - startX;
+                    const dy = moveEvent.clientY - startY;
+                    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) hasMoved = true;
+                    el.style.left = (initialLeft + dx) + 'px';
+                    el.style.top = (initialTop + dy) + 'px';
+                }
+
+                function onMouseUp() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    if (hasMoved) {
+                        recordAction('move', el, {
+                            from: { left: initialLeft, top: initialTop },
+                            to: { left: el.offsetLeft, top: el.offsetTop }
+                        });
+                    }
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        }
+
+        // --- Selection & Properties ---
+        function selectAnnotation(el) {
+            deselectAnnotation();
+            selectedAnnotation = el;
+
+            if (el.tagName.toLowerCase() === 'svg') {
+                el.firstChild.setAttribute('filter', 'drop-shadow(0 0 2px #3b82f6)');
+            } else {
+                el.classList.add('selected');
+                if (!el.classList.contains('text-annotation-wrapper')) {
+                    el.classList.remove('border-transparent');
+                    if (el.dataset.type !== 'rect') el.classList.add('border-blue-500');
+                }
+            }
+            selectedOptions.classList.remove('hidden');
+
+            // Sync Toolbar with Selection
+            if (el.dataset.type === 'text') {
+                textOptions.classList.remove('hidden');
+                drawingOptions.classList.add('hidden');
+
+                // Show bold state
+                const content = el.querySelector('.text-annotation-content');
+                if (content.style.fontWeight === 'bold') {
+                    boldBtn.classList.add('bg-gray-300');
+                } else {
+                    boldBtn.classList.remove('bg-gray-300');
+                }
+
+            } else if (['rect', 'pencil'].includes(el.dataset.type)) {
+                textOptions.classList.add('hidden');
+                drawingOptions.classList.remove('hidden');
+            }
+        }
+
+        function deselectAnnotation() {
+            if (!selectedAnnotation) return;
+            const el = selectedAnnotation;
+
+            if (el.tagName.toLowerCase() === 'svg') {
+                el.firstChild.removeAttribute('filter');
+            } else {
+                el.classList.remove('selected');
+                if (!el.classList.contains('text-annotation-wrapper')) {
+                    el.classList.add('border-transparent');
+                    el.classList.remove('border-blue-500');
+                }
+            }
+            selectedAnnotation = null;
+            selectedOptions.classList.add('hidden');
+        }
+
+        function updateSelectedStyle(prop, value) {
+            if (!selectedAnnotation) return;
+            const el = selectedAnnotation;
+
+            if (el.dataset.type === 'text') {
+                const content = el.querySelector('.text-annotation-content');
+                if (prop === 'color') content.style.color = value;
+                if (prop === 'size') content.style.fontSize = value + 'px';
+                if (prop === 'font') {
+                    content.classList.remove('font-sinhala-serif', 'font-sinhala-sans', 'font-tamil', 'font-english');
+                    content.classList.add(value);
+                }
+            } else if (el.dataset.type === 'pencil' && el.firstChild) {
+                if (prop === 'color') {
+                    el.firstChild.setAttribute('stroke', value);
+                    el.dataset.color = value;
+                }
+                if (prop === 'size') {
+                    el.firstChild.setAttribute('stroke-width', value);
+                    el.dataset.size = value;
+                }
+            } else if (el.dataset.type === 'rect') {
+                if (prop === 'color') el.style.borderColor = value;
+                if (prop === 'size') el.style.borderWidth = value + 'px';
+            }
+        }
+
+        function toggleBold() {
+            if (!selectedAnnotation || selectedAnnotation.dataset.type !== 'text') return;
+            const content = selectedAnnotation.querySelector('.text-annotation-content');
+
+            if (content.style.fontWeight === 'bold') {
+                content.style.fontWeight = 'normal';
+                boldBtn.classList.remove('bg-gray-300');
+            } else {
+                content.style.fontWeight = 'bold';
+                boldBtn.classList.add('bg-gray-300');
+            }
+        }
+
+        function deleteSelected() {
+            if (!selectedAnnotation) return;
+            const el = selectedAnnotation;
+            const parent = el.parentNode;
+
+            el.remove();
+            deselectAnnotation();
+
+            recordAction('delete', el, parent);
+        }
+
+        // --- Undo / Redo Logic ---
+        function recordAction(type, element, context) {
+            undoStack.push({ type, element, context });
+            redoStack.length = 0;
+        }
+
+        function undo() {
+            if (undoStack.length === 0) return;
+            const action = undoStack.pop();
+            redoStack.push(action);
+
+            if (action.type === 'add') {
+                action.element.remove();
+            } else if (action.type === 'delete') {
+                action.context.appendChild(action.element);
+            } else if (action.type === 'move') {
+                action.element.style.left = action.context.from.left + 'px';
+                action.element.style.top = action.context.from.top + 'px';
+            }
+        }
+
+        function redo() {
+            if (redoStack.length === 0) return;
+            const action = redoStack.pop();
+            undoStack.push(action);
+
+            if (action.type === 'add') {
+                action.context.appendChild(action.element);
+            } else if (action.type === 'delete') {
+                action.element.remove();
+            } else if (action.type === 'move') {
+                action.element.style.left = action.context.to.left + 'px';
+                action.element.style.top = action.context.to.top + 'px';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (activeTool === 'text' && document.activeElement.contentEditable === 'true') {
+                // Don't interfere with typing events unless special
+                if (e.key === 'Delete') {
+                    // Only delete if full object selected not text? 
+                    // Actually better not to hook Delete key while typing text.
+                    return;
+                }
+            }
+
+            if (e.key === 'Delete') deleteSelected();
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                undo();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault();
+                redo();
+            }
+        });
+
+        // --- PDF Generation ---
+        async function savePDF() {
+            if (!pdfDocBytes) return;
+            showLoading(true, "Saving PDF...");
+
+            try {
+                const { PDFDocument, rgb } = PDFLib;
+                const pdfDoc = await PDFDocument.load(pdfDocBytes);
+                pdfDoc.registerFontkit(fontkit);
+
+                // Load Fonts
+                // Note: Loading multiple fonts might be slow. Usually best to bundle or only load used ones.
+                // We will attempt to load the used one dynamically?
+                // For simplicity, we load the Sinhala Serif (Iskoola Pota style) and Tamil as custom fonts.
+                // Standard fonts for English.
+
+                let sinhalaFont = null;
+                let tamilFont = null;
+
+                try {
+                    // Start uploads in parallel
+                    // Using Noto Serif Sinhala as Iskoola Pota substitute
+                    const p1 = fetch('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notoserifsinhala/NotoSerifSinhala-Regular.ttf').then(r => r.arrayBuffer());
+                    const p2 = fetch('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosanstamil/NotoSansTamil-Regular.ttf').then(r => r.arrayBuffer());
+
+                    const [sinhalaBytes, tamilBytes] = await Promise.all([p1, p2]);
+
+                    sinhalaFont = await pdfDoc.embedFont(sinhalaBytes);
+                    tamilFont = await pdfDoc.embedFont(tamilBytes);
+
+                } catch (e) { console.warn("Font loading error", e); }
+
+
+                const pages = pdfDoc.getPages();
+                const pageWrappers = document.querySelectorAll('.pdf-page-container');
+
+                pageWrappers.forEach((wrapper, index) => {
+                    const page = pages[index];
+                    const { width, height } = page.getSize();
+                    const layer = wrapper.querySelector('.annotation-layer');
+                    if (!layer) return;
+
+                    const updates = layer.querySelectorAll('.annotation, .text-annotation-wrapper');
+
+                    updates.forEach(el => {
+                        const style = window.getComputedStyle(el);
+                        let visualLeft = parseFloat(el.style.left) || 0;
+                        let visualTop = parseFloat(el.style.top) || 0;
+
+                        const pdfX = visualLeft / pdfScale;
+                        const pdfY = height - (visualTop / pdfScale);
+
+                        const parseColor = (c) => {
+                            if (!c) return rgb(0, 0, 0);
+                            if (c.startsWith('#')) {
+                                const r = parseInt(c.substr(1, 2), 16) / 255;
+                                const g = parseInt(c.substr(3, 2), 16) / 255;
+                                const b = parseInt(c.substr(5, 2), 16) / 255;
+                                return rgb(r, g, b);
+                            }
+                            if (c.startsWith('rgb')) {
+                                const vals = c.match(/\d+/g);
+                                return rgb(vals[0] / 255, vals[1] / 255, vals[2] / 255);
+                            }
+                            return rgb(0, 0, 0);
+                        }
+
+                        if (el.dataset.type === 'text') {
+                            // Text wrapper, get inner content
+                            const content = el.querySelector('.text-annotation-content');
+                            const textStyle = window.getComputedStyle(content);
+                            const text = content.innerText;
+                            const fontSize = parseFloat(textStyle.fontSize) / pdfScale;
+
+                            // Font Selection logic
+                            let selectedFont = undefined; // Default standard font
+                            if (content.classList.contains('font-sinhala-serif') || content.classList.contains('font-sinhala-sans')) {
+                                selectedFont = sinhalaFont;
+                            } else if (content.classList.contains('font-tamil')) {
+                                selectedFont = tamilFont;
+                            }
+
+                            // Unfortunately pdf-lib doesn't support bolding embedded fonts easily without loading Bold variant.
+                            // We will ignore bold for custom fonts for now unless we load Bold variants too.
+
+                            const options = {
+                                x: pdfX,
+                                y: pdfY - fontSize, // Baseline adjust tough to get perfect
+                                size: fontSize,
+                                font: selectedFont,
+                                color: parseColor(textStyle.color),
+                            };
+
+                            page.drawText(text, options);
+
+                        } else if (el.dataset.type === 'rect') {
+                            const w = parseFloat(style.width) / pdfScale;
+                            const h = parseFloat(style.height) / pdfScale;
+                            const bw = parseFloat(style.borderWidth) / pdfScale;
+                            page.drawRectangle({
+                                x: pdfX, y: pdfY - h, width: w, height: h,
+                                borderColor: parseColor(style.borderColor),
+                                borderWidth: bw,
+                            });
+                        } else if (el.dataset.type === 'eraser') {
+                            const w = parseFloat(style.width) / pdfScale;
+                            const h = parseFloat(style.height) / pdfScale;
+                            page.drawRectangle({
+                                x: pdfX, y: pdfY - h, width: w, height: h,
+                                color: rgb(1, 1, 1),
+                            });
+                        } else if (el.dataset.type === 'pencil' && el.firstChild) {
+                            const points = JSON.parse(el.dataset.points);
+                            const color = parseColor(el.dataset.color);
+                            const size = parseFloat(el.dataset.size) / pdfScale;
+                            if (points.length > 1) {
+                                for (let i = 0; i < points.length - 1; i++) {
+                                    const p1 = points[i];
+                                    const p2 = points[i + 1];
+                                    const x1 = p1[0] / pdfScale;
+                                    const y1 = height - (p1[1] / pdfScale);
+                                    const x2 = p2[0] / pdfScale;
+                                    const y2 = height - (p2[1] / pdfScale);
+                                    page.drawLine({
+                                        start: { x: x1, y: y1 }, end: { x: x2, y: y2 },
+                                        thickness: size, color: color, lineCap: 'round'
+                                    });
+                                }
+                            }
+                        }
+                    });
+                });
+
+                const pdfBytes = await pdfDoc.save();
+                download(pdfBytes, "edited_document.pdf", "application/pdf");
+            } catch (e) {
+                console.error(e);
+                alert("Error saving: " + e.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -13,6 +13,9 @@
         }
     </style>
 </head>
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXX"
+    crossorigin="anonymous"></script>
 
 <body class="bg-gray-50 text-gray-800 font-sans">
 
@@ -62,7 +65,7 @@
 
             <!-- Tool 1 -->
             <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-2xl transition duration-300 border border-gray-100 group cursor-pointer"
-                onclick="openTool('editor')">
+                onclick="window.location.href='pdf-editor.html'">
                 <div
                     class="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center mb-6 text-red-500 group-hover:bg-red-500 group-hover:text-white transition">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +81,7 @@
 
             <!-- Tool 2 -->
             <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-2xl transition duration-300 border border-gray-100 group cursor-pointer"
-                onclick="openTool('eraser')">
+                onclick="window.location.href='pdf-editor.html?tool=eraser'">
                 <div
                     class="w-16 h-16 bg-orange-100 rounded-lg flex items-center justify-center mb-6 text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,7 +97,7 @@
 
             <!-- Tool 3 -->
             <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-2xl transition duration-300 border border-gray-100 group cursor-pointer"
-                onclick="openTool('merge')">
+                onclick="window.location.href='merge-pdf.html'">
                 <div
                     class="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mb-6 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,17 +113,17 @@
 
             <!-- Tool 4 -->
             <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-2xl transition duration-300 border border-gray-100 group cursor-pointer"
-                onclick="openTool('split')">
+                onclick="window.location.href='pdf-to-word.html'">
                 <div
-                    class="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mb-6 text-green-500 group-hover:bg-green-500 group-hover:text-white transition">
+                    class="w-16 h-16 bg-blue-900 rounded-lg flex items-center justify-center mb-6 text-white group-hover:bg-blue-800 transition">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                         </path>
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Image to PDF</h3>
-                <p class="text-gray-600 mb-4">Convert your JPG or PNG images into PDF format instantly.</p>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">PDF to Word</h3>
+                <p class="text-gray-600 mb-4">Convert PDF files to editable Word documents (Docx) for easy editing.</p>
                 <span class="text-blue-600 font-semibold group-hover:underline">Launch Tool &rarr;</span>
             </div>
 
